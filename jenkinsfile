@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment{
         TAG=getDockerTag()
-        DOCKER_TAG=sh label: '', script: 'echo ${TAG}| cut -c 1-5'
+        DOCKER_TAG="sh label: '', script: 'echo ${TAG}| cut -c 1-5'"
     }
     stages{
         stage('Build Docker Image'){
