@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment{
-        DOCKER_TAG=getDockerTag()
+        DOCKER_TAG=1.2
         
     }
     stages{
@@ -29,7 +29,7 @@ pipeline {
 		stage('deploy to K8s'){
 		    steps{
 			    sh "chmod 777 changeTag.sh"
-				sh "./changeTag.sh `echo ${DOCKER_TAG}|cut -c 1-5`"
+				sh "./changeTag.sh ${DOCKER_TAG}"
 			    sshagent(['kube']) {
                        sh "scp -o StrictHostKeyChecking=no node-app-pod.yml vm-user@34.80.195.215:/home/vm-user/"   
                            script{
