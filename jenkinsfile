@@ -10,7 +10,7 @@ pipeline {
 			    sshagent(['kube']) {
                 sh "scp -o StrictHostKeyChecking=no apache_dockerfile vm-user@35.185.164.230:/home/vm-user/"
 				sh "scp -o StrictHostKeyChecking=no index.html vm-user@35.185.164.230:/home/vm-user/"
-				sh "ssh vm-user@35.185.164.230 sudo docker build  -t bapisahoo/mynginx:${DOCKER_TAG} -f /home/vm-user/apache_dockerfile "
+				sh "ssh vm-user@35.185.164.230 sudo docker build  -t bapisahoo/mynginx:${DOCKER_TAG} -f apache_dockerfile /home/vm-user "
                 }
                
             }
