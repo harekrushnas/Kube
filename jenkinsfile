@@ -9,7 +9,7 @@ pipeline {
             steps{
 			    sshagent(['kube']) {
                 sh "scp -o StrictHostKeyChecking=no apache_dockerfile vm-user@35.185.164.230:/home/vm-user/"
-				sh "docker build -f apache_dockerfile -t mynginx:${DOCKER_TAG}"
+				sh "ssh vm-user@35.185.164.230 docker build -f apache_dockerfile -t mynginx:${DOCKER_TAG}"
                 }
                
             }
@@ -19,8 +19,8 @@ pipeline {
 			    sshagent(['kube']) {
                               
 			    withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPasswd')]) {
-				      sh "docker login -u bapisahoo -p${dockerHubPasswd}"
-					  sh "docker push bapisahoo/mynginx:${DOCKER_TAG}"
+				      sh "ssh vm-user@35.185.164.230 docker login -u bapisahoo -p${dockerHubPasswd}"
+					  sh "ssh vm-user@35.185.164.230 docker push bapisahoo/mynginx:${DOCKER_TAG}"
                                           }
 			    }
 			}
