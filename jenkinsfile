@@ -1,1 +1,33 @@
-d
+pipeline {
+    agent any
+    environment{
+        DOCKER_TAG = 1.1
+        
+    }
+    stages{
+        stage('Build Docker Image'){
+            steps{
+			    sshagent(['kube']) {
+                sh "scp -o StrictHostKeyChecking=no apache_dockerfile vm-user@35.185.164.230:/home/vm-user/"
+				sh "docker build -f apache_dockerfile -t mynginx:${DOCKER_TAG}"
+                }
+               
+            }
+        }
+		stage('Docker Hub Push'){
+		    steps{
+			    sshagent(['kube']) {
+                              
+			    withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPasswd')]) {
+				      sh "docker login -u bapisahoo -p${dockerHubPasswd}"
+					  sh "docker push bapisahoo/mynginx:${DOCKER_TAG}"
+                                          }
+			    }
+			}
+		}
+        
+        
+    }
+}
+
+
