@@ -1,0 +1,5 @@
+FROM nginx
+MAINTAINER Bapi
+LABEL  Image_name="Nginx"
+ADD ./index.html /usr/share/nginx/html/.
+EXPOSE 80
