@@ -1,5 +1,4 @@
-
-peline {
+pipeline {
     agent any
     environment{
         
@@ -52,63 +51,6 @@ peline {
 	def getDockerTag(){
     def tagg  = sh script: 'git rev-parse HEAD', returnStdout: true
 	def tag= sh script: 'echo 123456| cut -c 1-2', returnStdout: true
-    return tag
-     }
-
-
-pipeline {
-    agent any
-    environment{
-        
-        DOCKER_TAG=getDockerTag()
-    }
-    stages{
-        stage('Build Docker Image'){
-            steps{
-			    sshagent(['kube']) {
-                sh "scp -o StrictHostKeyChecking=no apache_dockerfile vm-user@35.185.164.230:/home/vm-user/"
-				sh "scp -o StrictHostKeyChecking=no index.html vm-user@35.185.164.230:/home/vm-user/"
-				sh "ssh vm-user@35.185.164.230 sudo docker build  -t bapisahoo/mynginx:${DOCKER_TAG} -f apache_dockerfile /home/vm-user "
-                }
-               
-            }
-        }
-		stage('Docker Hub Push'){
-		    steps{
-			    sshagent(['kube']) {
-                              
-			    withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPasswd')]) {
-				      sh "ssh vm-user@35.185.164.230 sudo docker login -u bapisahoo -p${dockerHubPasswd}"
-					  sh "ssh vm-user@35.185.164.230 sudo docker push bapisahoo/mynginx:${DOCKER_TAG}"
-                                          }
-			    }
-			}
-		}
-		stage('deploy to K8s'){
-		    steps{
-			    sh "chmod 777 changeTag.sh"
-				sh "./changeTag.sh ${DOCKER_TAG}"
-			    sshagent(['kube']) {
-                       sh "scp -o StrictHostKeyChecking=no node-app-pod.yml vm-user@34.80.195.215:/home/vm-user/"   
-                           script{
-						       try{
-							     sh "ssh vm-user@34.80.195.215 kubectl apply -f node-app-pod.yml"
-							   }catch(error){
-							    sh "ssh vm-user@34.80.195.215 kubectl create -f node-app-pod.yml"
-							   }
-                             } 						   
-			    
-			    }
-			}
-		}
-        
-        
-    }
-}
-	
-	def getDockerTag(){
-    def tagg  = sh script: 'git rev-parse HEAD', returnStdout: true
-	def tag= sh script: 'echo 123456| cut -c 1-5', returnStdout: true
     return tag
      }
 
