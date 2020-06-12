@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment{
-        DOCKER_TAG = 1.1
+        DOCKER_TAG=getDockerTag()
         
     }
     stages{
@@ -26,9 +26,31 @@ pipeline {
 			    }
 			}
 		}
+		stage('deploy to K8s'){
+		    steps{
+			    sh "chmod 777 changeTag.sh"
+				sh "./changeTag.sh ${DOCKER_TAG}"
+			    sshagent(['kube']) {
+                       sh "scp -o StrictHostKeyChecking=no node-app-pod.yml vm-user@34.80.195.215:/home/vm-user/"   
+                           script{
+						       try{
+							     sh "ssh vm-user@34.80.195.215 kubectl apply -f node-app-pod.yml"
+							   }catch(error){
+							    sh "ssh vm-user@34.80.195.215 kubectl create -f node-app-pod.yml"
+							   }
+                             } 						   
+			    
+			    }
+			}
+		}
         
         
     }
+	
+	def getDockerTag(){
+    def tag  = sh script: 'git rev-parse HEAD', returnStdout: true
+    return tag
+     }
 }
 
 
