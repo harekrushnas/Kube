@@ -35,9 +35,15 @@ pipeline {
 
                            script{
                                                        try{
-                                                             sh "ssh vm-user@35.185.164.230 kubectl apply -f node-app-pod.yml"
+                                                             sh "ssh vm-user@35.185.164.230 kubectl apply -f pod.yml"
                                                            }catch(error){
-                                                            sh "ssh vm-user@35.185.164.230 kubectl create -f node-app-pod.yml"
+                                                            sh "ssh vm-user@35.185.164.230 kubectl create -f pod.yml"
+                                                           }
+														   
+													    try{
+                                                             sh "ssh vm-user@35.185.164.230 kubectl apply -f service.yaml"
+                                                           }catch(error){
+                                                            sh "ssh vm-user@35.185.164.230 kubectl create -f service.yaml"
                                                            }
                              }
 
