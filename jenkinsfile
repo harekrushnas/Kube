@@ -1,4 +1,4 @@
-pipeline {
+peline {
     agent any
     environment{
         
@@ -8,9 +8,9 @@ pipeline {
         stage('Build Docker Image'){
             steps{
 			    sshagent(['kube']) {
-                sh "scp -o StrictHostKeyChecking=no apache_dockerfile vm-user@35.185.164.230:/home/vm-user/"
-				sh "scp -o StrictHostKeyChecking=no index.html vm-user@35.185.164.230:/home/vm-user/"
-				sh "ssh vm-user@35.185.164.230 sudo docker build   -f apache_dockerfile /home/vm-user  -t bapisahoo/mynginx:${DOCKER_TAG}"
+                sh "scp -o StrictHostKeyChecking=no apache_dockerfile vm-user@130.211.250.209:/home/vm-user/"
+				sh "scp -o StrictHostKeyChecking=no index.html vm-user@130.211.250.209:/home/vm-user/"
+				sh "ssh vm-user@130.211.250.209 sudo docker build   -f apache_dockerfile /home/vm-user  -t bapisahoo/mynginx:${DOCKER_TAG}"
                 }
                
             }
@@ -20,8 +20,8 @@ pipeline {
 			    sshagent(['kube']) {
                               
 			    withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPasswd')]) {
-				      sh "ssh vm-user@35.185.164.230 sudo docker login -u bapisahoo -p${dockerHubPasswd}"
-					  sh "ssh vm-user@35.185.164.230 sudo docker push bapisahoo/mynginx:${DOCKER_TAG}"
+				      sh "ssh vm-user@130.211.250.209 sudo docker login -u bapisahoo -p${dockerHubPasswd}"
+					  sh "ssh vm-user@130.211.250.209 sudo docker push bapisahoo/mynginx:${DOCKER_TAG}"
                                           }
 			    }
 			}
@@ -31,13 +31,13 @@ pipeline {
 			    sh "chmod 777 changeTag.sh"
 				sh "./changeTag.sh ${DOCKER_TAG}"
 			    sshagent(['kube']) {
-                       sh "scp -o StrictHostKeyChecking=no node-app-pod.yml  service.yaml vm-user@34.80.195.215:/home/vm-user/"   
+                       sh "scp -o StrictHostKeyChecking=no node-app-pod.yml  service.yaml vm-user@35.185.164.230:/home/vm-user/"   
 
                            script{
 						       try{
-							     sh "ssh vm-user@34.80.195.215 kubectl apply -f node-app-pod.yml"
+							     sh "ssh vm-user@35.185.164.230 kubectl apply -f node-app-pod.yml"
 							   }catch(error){
-							    sh "ssh vm-user@34.80.195.215 kubectl create -f node-app-pod.yml"
+							    sh "ssh vm-user@35.185.164.230 kubectl create -f node-app-pod.yml"
 							   }
                              } 						   
 			    
