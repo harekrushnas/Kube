@@ -7,7 +7,7 @@ pipeline {
     stages{
         stage('Build Docker Image'){
             steps{
-                            sshagent(['kube']) {
+                            sshagent(['k8s']) {
                 sh "scp -o StrictHostKeyChecking=no apache_dockerfile vm-user@130.211.250.209:/home/vm-user/"
                                 sh "scp -o StrictHostKeyChecking=no index.html vm-user@130.211.250.209:/home/vm-user/"
                                 sh "ssh vm-user@130.211.250.209 sudo docker build   -f apache_dockerfile /home/vm-user  -t bapisahoo/mynginx:${DOCKER_TAG}"
@@ -17,7 +17,7 @@ pipeline {
         }
                 stage('Docker Hub Push'){
                     steps{
-                            sshagent(['kube']) {
+                            sshagent(['k8s']) {
 
                             withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPasswd')]) {
                                       sh "ssh vm-user@130.211.250.209 sudo docker login -u bapisahoo -p${dockerHubPasswd}"
@@ -30,7 +30,7 @@ pipeline {
                     steps{
                             sh "chmod 777 changeTag.sh"
                                 sh "./changeTag.sh ${DOCKER_TAG}"
-                            sshagent(['kube']) {
+                            sshagent(['k8s']) {
                        sh "scp -o StrictHostKeyChecking=no node-app-pod.yml  service.yaml vm-user@35.185.164.230:/home/vm-user/"
 
                            script{
