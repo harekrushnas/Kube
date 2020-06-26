@@ -1,59 +1,60 @@
-peline {
+pipeline {
     agent any
     environment{
-        
+
         DOCKER_TAG=getDockerTag()
     }
     stages{
         stage('Build Docker Image'){
             steps{
-			    sshagent(['kube']) {
+                            sshagent(['kube']) {
                 sh "scp -o StrictHostKeyChecking=no apache_dockerfile vm-user@130.211.250.209:/home/vm-user/"
-				sh "scp -o StrictHostKeyChecking=no index.html vm-user@130.211.250.209:/home/vm-user/"
-				sh "ssh vm-user@130.211.250.209 sudo docker build   -f apache_dockerfile /home/vm-user  -t bapisahoo/mynginx:${DOCKER_TAG}"
+                                sh "scp -o StrictHostKeyChecking=no index.html vm-user@130.211.250.209:/home/vm-user/"
+                                sh "ssh vm-user@130.211.250.209 sudo docker build   -f apache_dockerfile /home/vm-user  -t bapisahoo/mynginx:${DOCKER_TAG}"
                 }
-               
+
             }
         }
-		stage('Docker Hub Push'){
-		    steps{
-			    sshagent(['kube']) {
-                              
-			    withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPasswd')]) {
-				      sh "ssh vm-user@130.211.250.209 sudo docker login -u bapisahoo -p${dockerHubPasswd}"
-					  sh "ssh vm-user@130.211.250.209 sudo docker push bapisahoo/mynginx:${DOCKER_TAG}"
+                stage('Docker Hub Push'){
+                    steps{
+                            sshagent(['kube']) {
+
+                            withCredentials([string(credentialsId: 'docker-hub', variable: 'dockerHubPasswd')]) {
+                                      sh "ssh vm-user@130.211.250.209 sudo docker login -u bapisahoo -p${dockerHubPasswd}"
+                                          sh "ssh vm-user@130.211.250.209 sudo docker push bapisahoo/mynginx:${DOCKER_TAG}"
                                           }
-			    }
-			}
-		}
-		stage('deploy to K8s'){
-		    steps{
-			    sh "chmod 777 changeTag.sh"
-				sh "./changeTag.sh ${DOCKER_TAG}"
-			    sshagent(['kube']) {
-                       sh "scp -o StrictHostKeyChecking=no node-app-pod.yml  service.yaml vm-user@35.185.164.230:/home/vm-user/"   
+                            }
+                        }
+                }
+                stage('deploy to K8s'){
+                    steps{
+                            sh "chmod 777 changeTag.sh"
+                                sh "./changeTag.sh ${DOCKER_TAG}"
+                            sshagent(['kube']) {
+                       sh "scp -o StrictHostKeyChecking=no node-app-pod.yml  service.yaml vm-user@35.185.164.230:/home/vm-user/"
 
                            script{
-						       try{
-							     sh "ssh vm-user@35.185.164.230 kubectl apply -f node-app-pod.yml"
-							   }catch(error){
-							    sh "ssh vm-user@35.185.164.230 kubectl create -f node-app-pod.yml"
-							   }
-                             } 						   
-			    
-			    }
-			}
-		}
-        
-        
+                                                       try{
+                                                             sh "ssh vm-user@35.185.164.230 kubectl apply -f node-app-pod.yml"
+                                                           }catch(error){
+                                                            sh "ssh vm-user@35.185.164.230 kubectl create -f node-app-pod.yml"
+                                                           }
+                             }
+
+                            }
+                        }
+                }
+
+
     }
 }
-	
-	def getDockerTag(){
+
+        def getDockerTag(){
     def tagg  = sh script: 'git rev-parse HEAD', returnStdout: true
-	def tag= sh script: 'git rev-parse HEAD| cut -c 1-6', returnStdout: true
+        def tag= sh script: 'git rev-parse HEAD| cut -c 1-6', returnStdout: true
     return tag
      }
+
 
 
 
